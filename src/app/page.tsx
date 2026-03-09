@@ -1,7 +1,8 @@
 "use client";
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Send, Loader2, Sparkles } from 'lucide-react';
+import { Send, Loader2, Download, Sparkles } from 'lucide-react';
+import { saveAs } from 'file-saver';
 
 export default function Home() {
   const [input, setInput] = useState('');
@@ -13,9 +14,10 @@ export default function Home() {
     setLoading(true);
     setPrd('');
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({ prompt: input }),
+      const response = await fetch('/api/chat', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input }) 
       });
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -28,33 +30,40 @@ export default function Home() {
     setLoading(false);
   };
 
+  const downloadWord = () => {
+    // 简化版导出：直接导出为文本，确保不会报错
+    const blob = new Blob([prd], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, "prd-export.txt");
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50 p-6 md:p-12">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-8">
-          <Sparkles className="text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">PRD 快速生成器</h1>
+    <main className="min-h-screen bg-white p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Sparkles className="text-blue-600" /> 需求脑雾清除器 2.0
+          </h1>
+          {prd && <button onClick={downloadWord} className="text-sm border p-2 rounded">导出文档</button>}
         </div>
         
-        <div className="flex gap-3 mb-10">
+        <div className="flex gap-2 mb-8">
           <input 
-            className="flex-1 p-4 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"
-            placeholder="输入产品想法，如：一个宠物医生的预约小程序"
+            className="flex-1 border p-4 rounded-xl shadow-sm"
+            placeholder="输入产品想法..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
           <button 
             onClick={generatePRD}
+            className="bg-blue-600 text-white px-6 rounded-xl disabled:bg-gray-300"
             disabled={loading}
-            className="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold hover:bg-blue-700 disabled:bg-blue-300 transition-all flex items-center gap-2"
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-            生成
+            {loading ? <Loader2 className="animate-spin" /> : "生成"}
           </button>
         </div>
 
         {prd && (
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 prose prose-blue max-w-none text-gray-800 leading-relaxed">
+          <div className="prose max-w-none border p-8 rounded-2xl bg-gray-50">
             <ReactMarkdown>{prd}</ReactMarkdown>
           </div>
         )}
